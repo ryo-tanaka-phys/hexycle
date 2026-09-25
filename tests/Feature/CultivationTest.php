@@ -272,4 +272,129 @@ public function test_admin_can_assign_cultivation_to_order_item(): void
         $cultivation->assigned_at
     );
 }
+public function test_cultivation_cannot_be_assigned_to_different_product_order_item(): void
+{
+    $admin = User::factory()->create([
+        'role' => 'admin',
+    ]);
+
+    $customer = User::factory()->create();
+
+    $event = Event::factory()->create();
+
+    $cultivationProduct = Product::factory()->create([
+        'name' => 'サニーレタス',
+    ]);
+
+    $orderedProduct = Product::factory()->create([
+        'name' => 'バジル',
+    ]);
+
+    $eventProduct = EventProduct::create([
+        'event_id' => $event->id,
+        'product_id' => $orderedProduct->id,
+        'price' => 300,
+        'stock' => 10,
+        'reservation_limit' => 3,
+        'is_available' => true,
+    ]);
+
+    $order = Order::create([
+        'user_id' => $customer->id,
+        'event_id' => $event->id,
+        'status' => 'reserved',
+        'ordered_at' => now(),
+    ]);
+
+    $orderItem = OrderItem::create([
+        'order_id' => $order->id,
+        'event_product_id' => $eventProduct->id,
+        'quantity' => 1,
+        'unit_price' => 300,
+    ]);
+
+    $cultivation = Cultivation::factory()->create([
+        'product_id' => $cultivationProduct->id,
+        'order_item_id' => null,
+    ]);
+
+    $response = $this
+        ->actingAs($admin)
+        ->patch(
+            route('admin.cultivations.assign', $cultivation),
+            [
+                'order_item_id' => $orderItem->id,
+            ]
+        );
+
+    $response->assertSessionHasErrors('order_item_id');
+
+    $cultivation->refresh();
+
+    $this->assertNull(
+        $cultivation->order_item_id
+    );
+}
+
+public function test_cultivation_cannot_exceed_order_item_quantity(): void
+{
+    $admin = User::factory()->create([
+        'role' => 'admin',
+    ]);
+
+    $customer = User::factory()->create();
+
+    $event = Event::factory()->create();
+    $product = Product::factory()->create();
+
+    $eventProduct = EventProduct::create([
+        'event_id' => $event->id,
+        'product_id' => $product->id,
+        'price' => 300,
+        'stock' => 10,
+        'reservation_limit' => 3,
+        'is_available' => true,
+    ]);
+
+    $order = Order::create([
+        'user_id' => $customer->id,
+        'event_id' => $event->id,
+        'status' => 'reserved',
+        'ordered_at' => now(),
+    ]);
+
+    $orderItem = OrderItem::create([
+        'order_id' => $order->id,
+        'event_product_id' => $eventProduct->id,
+        'quantity' => 1,
+        'unit_price' => 300,
+    ]);
+
+    Cultivation::factory()->create([
+        'product_id' => $product->id,
+        'order_item_id' => $orderItem->id,
+    ]);
+
+    $secondCultivation = Cultivation::factory()->create([
+        'product_id' => $product->id,
+        'order_item_id' => null,
+    ]);
+
+    $response = $this
+        ->actingAs($admin)
+        ->patch(
+            route('admin.cultivations.assign', $secondCultivation),
+            [
+                'order_item_id' => $orderItem->id,
+            ]
+        );
+
+    $response->assertSessionHasErrors('order_item_id');
+
+    $secondCultivation->refresh();
+
+    $this->assertNull(
+        $secondCultivation->order_item_id
+    );
+}
 }
