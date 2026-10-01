@@ -21,7 +21,57 @@
         </div>
 
         <h2 class="text-xl font-semibold mb-3">販売予定の苗</h2>
+@if ($event->programs->isNotEmpty())
+    <section class="mt-10">
+        <h2 class="text-2xl font-semibold mb-4">
+            イベント企画
+        </h2>
 
+        <div class="grid gap-6 md:grid-cols-2">
+            @foreach ($event->programs as $program)
+                <div class="p-6 bg-white rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold">
+                        {{ $program->title }}
+                    </h3>
+
+                    @if ($program->description)
+                        <p class="mt-3 text-gray-700">
+                            {{ $program->description }}
+                        </p>
+                    @endif
+
+                    @if ($program->start_at)
+                        <p class="mt-4 text-sm text-gray-600">
+                            開始:
+                            {{ $program->start_at->format('Y年m月d日 H:i') }}
+                        </p>
+                    @endif
+
+                    @if ($program->end_at)
+                        <p class="text-sm text-gray-600">
+                            終了:
+                            {{ $program->end_at->format('Y年m月d日 H:i') }}
+                        </p>
+                    @endif
+
+                    @if ($program->location)
+                        <p class="text-sm text-gray-600">
+                            場所:
+                            {{ $program->location }}
+                        </p>
+                    @endif
+
+                    @if ($program->capacity)
+                        <p class="text-sm text-gray-600">
+                            定員:
+                            {{ $program->capacity }}人
+                        </p>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    </section>
+@endif
         @forelse ($event->eventProducts as $eventProduct)
             @if ($eventProduct->is_available)
                 <div class="mb-4 p-4 border rounded-lg">
@@ -45,5 +95,30 @@
         @empty
             <p>現在、販売予定の商品はありません。</p>
         @endforelse
+      
+@if ($program->capacity !== null)
+    <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+        <p class="font-semibold">
+            現在の混雑状況
+        </p>
+
+        <p class="mt-1">
+            現在:
+            {{ $program->inside_count }}
+            /
+            {{ $program->capacity }}
+            人
+        </p>
+
+        <p class="text-sm text-gray-600">
+            空き:
+            {{ max(
+                $program->capacity - $program->inside_count,
+                0
+            ) }}
+            人
+        </p>
+    </div>
+@endif
     </div>
 @endsection

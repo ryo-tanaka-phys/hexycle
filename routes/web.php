@@ -7,14 +7,36 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\CultivationController;
+use App\Http\Controllers\VisitController;
+use App\Http\Controllers\AdmissionReservationController;
 
 Route::get('/', function () {
     return view('home');
 })->name('home');
 
+Route::get(
+    '/programs/{eventProgram}/reservations',
+    [AdmissionReservationController::class, 'create']
+)->name('admission-reservations.create');
+
+Route::post(
+    '/programs/{eventProgram}/reservations',
+    [AdmissionReservationController::class, 'store']
+)->name('admission-reservations.store');
+
+Route::get(
+    '/reservations/{reservationCode}',
+    [AdmissionReservationController::class, 'show']
+)->name('admission-reservations.show');
+
+Route::patch(
+    '/reservations/{reservationCode}/cancel',
+    [AdmissionReservationController::class, 'cancel']
+)->name('admission-reservations.cancel');
 
 Route::get('/products/{eventProduct}', [ProductController::class, 'show'])
     ->name('products.show');
+
 
 
 Route::middleware(['auth', 'admin'])->group(function () {
@@ -35,7 +57,24 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     Route::get('/admin/cultivations', [CultivationController::class, 'adminIndex'])
     ->name('admin.cultivations.index');
-    
+    Route::middleware(['auth', 'admin'])->group(function () {
+    // 既存の管理者向けルート
+
+    Route::get(
+        '/admin/programs/{eventProgram}/visits',
+        [VisitController::class, 'index']
+    )->name('admin.visits.index');
+
+    Route::post(
+        '/admin/programs/{eventProgram}/visits',
+        [VisitController::class, 'store']
+    )->name('admin.visits.store');
+
+    Route::patch(
+        '/admin/visits/{visit}/exit',
+        [VisitController::class, 'exit']
+    )->name('admin.visits.exit');
+});
     Route::patch(
     '/admin/cultivations/{cultivation}/assign',
     [CultivationController::class, 'assignOrderItem']

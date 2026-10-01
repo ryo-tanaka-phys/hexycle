@@ -38,4 +38,8 @@ class User extends Authenticatable
 {
     return $this->hasMany(Order::class);
 }
+public function admissionReservations()
+{
+    return $this->hasMany(AdmissionReservation::class);
+}
 }

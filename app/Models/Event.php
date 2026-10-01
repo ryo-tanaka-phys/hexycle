@@ -27,4 +27,8 @@ class Event extends Model
 {
     return $this->hasMany(Order::class);
 }
+public function programs()
+{
+    return $this->hasMany(EventProgram::class);
+}
 }

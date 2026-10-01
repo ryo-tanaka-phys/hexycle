@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Event;
+use App\Models\EventProgram;
 use Illuminate\Http\Request;
 
-class EventController extends Controller
+class EventProgramController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,29 +34,15 @@ class EventController extends Controller
     /**
      * Display the specified resource.
      */
-public function show(Event $event)
-{
-    $event->load([
-        'eventProducts.product',
-
-        'programs' => function ($query) {
-            $query->where('status', 'published')
-                ->orderBy('start_at')
-                ->withCount([
-                    'visits as inside_count' => function ($query) {
-                        $query->where('status', 'inside');
-                    },
-                ]);
-        },
-    ]);
-
-    return view('events.show', compact('event'));
-}
+    public function show(EventProgram $eventProgram)
+    {
+        //
+    }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Event $event)
+    public function edit(EventProgram $eventProgram)
     {
         //
     }
@@ -64,7 +50,7 @@ public function show(Event $event)
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Event $event)
+    public function update(Request $request, EventProgram $eventProgram)
     {
         //
     }
@@ -72,7 +58,7 @@ public function show(Event $event)
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Event $event)
+    public function destroy(EventProgram $eventProgram)
     {
         //
     }
