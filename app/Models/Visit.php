@@ -17,6 +17,8 @@ class Visit extends Model
         'exited_at',
         'status',
         'check_in_code',
+        'party_size',
+        'admission_reservation_id',
     ];
 
     protected $casts = [
@@ -33,4 +35,8 @@ class Visit extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function admissionReservation()
+{
+    return $this->belongsTo(AdmissionReservation::class);
+}
 }

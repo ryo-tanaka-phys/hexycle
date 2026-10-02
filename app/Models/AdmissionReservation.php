@@ -35,4 +35,8 @@ class AdmissionReservation extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function visit()
+{
+    return $this->hasOne(Visit::class);
+}
 }

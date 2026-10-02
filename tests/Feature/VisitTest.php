@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Visit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use App\Models\AdmissionReservation;
 
 class VisitTest extends TestCase
 {
@@ -45,8 +46,9 @@ class VisitTest extends TestCase
         $response = $this
             ->actingAs($admin)
             ->post(route('admin.visits.store', $program), [
-                'guest_name' => 'Test Guest',
-            ]);
+    'guest_name' => 'Test Guest',
+    'party_size' => 1,
+]);
 
         $response->assertRedirect(
             route('admin.visits.index', $program)
@@ -79,8 +81,9 @@ class VisitTest extends TestCase
         $this
             ->actingAs($admin)
             ->post(route('admin.visits.store', $program), [
-                'guest_name' => 'Test Guest',
-            ]);
+    'guest_name' => 'Test Guest',
+    'party_size' => 1,
+]);
 
         $this->assertSame(
             1,
@@ -143,10 +146,11 @@ class VisitTest extends TestCase
         $response = $this
             ->actingAs($admin)
             ->post(route('admin.visits.store', $program), [
-                'guest_name' => 'Second Guest',
-            ]);
+    'guest_name' => 'Test Guest',
+    'party_size' => 1,
+]);
 
-        $response->assertSessionHasErrors('capacity');
+       $response->assertSessionHasErrors('party_size');
 
         $this->assertDatabaseMissing('visits', [
             'event_program_id' => $program->id,
@@ -174,4 +178,170 @@ class VisitTest extends TestCase
             ])
             ->assertForbidden();
     }
+    public function test_admin_can_check_in_admission_reservation(): void
+{
+    $admin = User::factory()->create([
+        'role' => 'admin',
+    ]);
+
+    $program = EventProgram::factory()->create([
+        'capacity' => 30,
+    ]);
+
+    $reservation = AdmissionReservation::factory()->create([
+        'event_program_id' => $program->id,
+        'guest_name' => 'Reserved Guest',
+        'party_size' => 2,
+        'status' => 'reserved',
+    ]);
+
+    $response = $this
+        ->actingAs($admin)
+        ->post(
+            route(
+                'admin.admission-reservations.check-in',
+                $reservation
+            )
+        );
+
+    $response->assertSessionHasNoErrors();
+
+    $reservation->refresh();
+
+    $this->assertSame(
+        'checked_in',
+        $reservation->status
+    );
+
+    $this->assertDatabaseHas('visits', [
+        'event_program_id' => $program->id,
+        'admission_reservation_id' => $reservation->id,
+        'guest_name' => 'Reserved Guest',
+        'party_size' => 2,
+        'status' => 'inside',
+    ]);
+}
+public function test_checked_in_reservation_cannot_be_checked_in_again(): void
+{
+    $admin = User::factory()->create([
+        'role' => 'admin',
+    ]);
+
+    $program = EventProgram::factory()->create([
+        'capacity' => 30,
+    ]);
+
+    $reservation = AdmissionReservation::factory()->create([
+        'event_program_id' => $program->id,
+        'guest_name' => 'Checked In Guest',
+        'party_size' => 2,
+        'status' => 'checked_in',
+    ]);
+
+    $response = $this
+        ->actingAs($admin)
+        ->post(
+            route(
+                'admin.admission-reservations.check-in',
+                $reservation
+            )
+        );
+
+    $response->assertSessionHasErrors('reservation');
+
+    $this->assertDatabaseMissing('visits', [
+        'admission_reservation_id' => $reservation->id,
+    ]);
+
+    $reservation->refresh();
+
+    $this->assertSame(
+        'checked_in',
+        $reservation->status
+    );
+}
+public function test_cancelled_reservation_cannot_be_checked_in(): void
+{
+    $admin = User::factory()->create([
+        'role' => 'admin',
+    ]);
+
+    $program = EventProgram::factory()->create([
+        'capacity' => 30,
+    ]);
+
+    $reservation = AdmissionReservation::factory()->create([
+        'event_program_id' => $program->id,
+        'guest_name' => 'Cancelled Guest',
+        'party_size' => 2,
+        'status' => 'cancelled',
+    ]);
+
+    $response = $this
+        ->actingAs($admin)
+        ->post(
+            route(
+                'admin.admission-reservations.check-in',
+                $reservation
+            )
+        );
+
+    $response->assertSessionHasErrors('reservation');
+
+    $this->assertDatabaseMissing('visits', [
+        'admission_reservation_id' => $reservation->id,
+    ]);
+
+    $reservation->refresh();
+
+    $this->assertSame(
+        'cancelled',
+        $reservation->status
+    );
+}
+public function test_reservation_cannot_be_checked_in_when_capacity_would_be_exceeded(): void
+{
+    $admin = User::factory()->create([
+        'role' => 'admin',
+    ]);
+
+    $program = EventProgram::factory()->create([
+        'capacity' => 3,
+    ]);
+
+    Visit::factory()->create([
+        'event_program_id' => $program->id,
+        'party_size' => 2,
+        'status' => 'inside',
+    ]);
+
+    $reservation = AdmissionReservation::factory()->create([
+        'event_program_id' => $program->id,
+        'guest_name' => 'Too Large Group',
+        'party_size' => 2,
+        'status' => 'reserved',
+    ]);
+
+    $response = $this
+        ->actingAs($admin)
+        ->post(
+            route(
+                'admin.admission-reservations.check-in',
+                $reservation
+            )
+        );
+
+    $response->assertSessionHasErrors('reservation');
+
+    $this->assertDatabaseMissing('visits', [
+        'admission_reservation_id' => $reservation->id,
+    ]);
+
+    $reservation->refresh();
+
+    $this->assertSame(
+        'reserved',
+        $reservation->status
+    );
+}
 }

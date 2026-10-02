@@ -67,6 +67,30 @@
                             {{ $program->capacity }}人
                         </p>
                     @endif
+                @if ($program->capacity !== null)
+    <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+        <p class="font-semibold">
+            現在の混雑状況
+        </p>
+
+        <p class="mt-1">
+            現在:
+            {{ $program->inside_count }}
+            /
+            {{ $program->capacity }}
+            人
+        </p>
+
+        <p class="text-sm text-gray-600">
+            空き:
+            {{ max(
+                $program->capacity - $program->inside_count,
+                0
+            ) }}
+            人
+        </p>
+    </div>
+@endif
                 </div>
             @endforeach
         </div>
@@ -96,29 +120,6 @@
             <p>現在、販売予定の商品はありません。</p>
         @endforelse
       
-@if ($program->capacity !== null)
-    <div class="mt-4 p-4 bg-gray-50 rounded-lg">
-        <p class="font-semibold">
-            現在の混雑状況
-        </p>
 
-        <p class="mt-1">
-            現在:
-            {{ $program->inside_count }}
-            /
-            {{ $program->capacity }}
-            人
-        </p>
-
-        <p class="text-sm text-gray-600">
-            空き:
-            {{ max(
-                $program->capacity - $program->inside_count,
-                0
-            ) }}
-            人
-        </p>
-    </div>
-@endif
     </div>
 @endsection

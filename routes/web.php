@@ -69,7 +69,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
         '/admin/programs/{eventProgram}/visits',
         [VisitController::class, 'store']
     )->name('admin.visits.store');
-
+Route::post(
+    '/admin/reservations/{admissionReservation}/check-in',
+    [VisitController::class, 'checkInReservation']
+)->name('admin.admission-reservations.check-in');
     Route::patch(
         '/admin/visits/{visit}/exit',
         [VisitController::class, 'exit']

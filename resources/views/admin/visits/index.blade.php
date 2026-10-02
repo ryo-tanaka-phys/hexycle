@@ -14,11 +14,7 @@
                 </div>
             @endif
 
-            @if ($errors->has('capacity'))
-                <div class="mb-4 p-4 bg-red-100 text-red-800 rounded">
-                    {{ $errors->first('capacity') }}
-                </div>
-            @endif
+          
 
             @if ($errors->has('visit'))
                 <div class="mb-4 p-4 bg-red-100 text-red-800 rounded">
@@ -110,7 +106,28 @@
                             </p>
                         @enderror
                     </div>
+<div class="mt-4">
+    <label for="party_size" class="block text-sm font-medium text-gray-700">
+        人数
+    </label>
 
+    <input
+        type="number"
+        id="party_size"
+        name="party_size"
+        value="{{ old('party_size', 1) }}"
+        min="1"
+        max="10"
+        required
+        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+    >
+
+    @error('party_size')
+        <p class="mt-1 text-sm text-red-600">
+            {{ $message }}
+        </p>
+    @enderror
+</div>
                     <button
                         type="submit"
                         class="mt-4 px-4 py-2 bg-gray-800 text-white rounded"
@@ -132,7 +149,10 @@
                                 <p class="font-semibold">
                                     {{ $visit->guest_name ?: '匿名来場者' }}
                                 </p>
-
+<p class="text-sm text-gray-600">
+    人数:
+    {{ $visit->party_size }}人
+</p>
                                 <p class="text-sm text-gray-600">
                                     入場:
                                     {{ $visit->entered_at }}
@@ -148,7 +168,80 @@
                                     {{ $visit->status }}
                                 </p>
                             </div>
+<div class="mb-6 p-6 bg-white shadow-sm rounded-lg">
+    <h3 class="text-lg font-semibold mb-4">
+        入場予約
+    </h3>
 
+    @if ($errors->has('reservation'))
+        <div class="mb-4 p-4 bg-red-100 text-red-800 rounded">
+            {{ $errors->first('reservation') }}
+        </div>
+    @endif
+
+    @forelse ($reservations as $reservation)
+        <div class="py-4 border-b">
+            <div class="flex items-start justify-between gap-4">
+
+                <div>
+                    <p class="font-semibold">
+                        {{ $reservation->guest_name ?: '匿名予約' }}
+                    </p>
+
+                    <p class="text-sm text-gray-600">
+                        予約時間:
+                        {{ $reservation->slot_start->format('Y-m-d H:i') }}
+                        ～
+                        {{ $reservation->slot_end->format('H:i') }}
+                    </p>
+
+                    <p class="text-sm text-gray-600">
+                        人数:
+                        {{ $reservation->party_size }}人
+                    </p>
+
+                    <p class="text-sm">
+                        状態:
+                        {{ $reservation->status }}
+                    </p>
+
+                    <p class="text-xs text-gray-500 mt-1">
+                        予約コード:
+                        {{ $reservation->reservation_code }}
+                    </p>
+                </div>
+
+                @if ($reservation->status === 'reserved')
+                    <form
+                        method="POST"
+                        action="{{ route(
+                            'admin.admission-reservations.check-in',
+                            $reservation
+                        ) }}"
+                    >
+                        @csrf
+
+                        <button
+                            type="submit"
+                            class="px-3 py-2 bg-blue-600 text-white rounded"
+                        >
+                            チェックイン
+                        </button>
+                    </form>
+                @else
+                    <span class="text-sm text-gray-500">
+                        チェックイン済み
+                    </span>
+                @endif
+
+            </div>
+        </div>
+    @empty
+        <p>
+            入場予約はありません。
+        </p>
+    @endforelse
+</div>
                             @if ($visit->status === 'inside')
                                 <form
                                     method="POST"
