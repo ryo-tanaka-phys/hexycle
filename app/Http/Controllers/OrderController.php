@@ -6,6 +6,7 @@ use App\Models\EventProduct;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\OrderItem;
 
 class OrderController extends Controller
 {
@@ -54,27 +55,92 @@ public function store(Request $request, EventProduct $eventProduct)
         ],
     ]);
 
-    DB::transaction(function () use ($request, $eventProduct) {
+    $event = $eventProduct->event;
+
+    if (
+        $event->reservation_start_at !== null
+        && now()->lt($event->reservation_start_at)
+    ) {
+        return back()->withErrors([
+            'reservation' => '予約受付はまだ開始されていません。',
+        ])->withInput();
+    }
+
+    if (
+        $event->reservation_end_at !== null
+        && now()->gt($event->reservation_end_at)
+    ) {
+        return back()->withErrors([
+            'reservation' => '予約受付は終了しています。',
+        ])->withInput();
+    }
+
+    $result = DB::transaction(function () use ($request, $eventProduct) {
+        $lockedEventProduct = EventProduct::whereKey($eventProduct->id)
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        $alreadyReserved = OrderItem::where(
+            'event_product_id',
+            $lockedEventProduct->id
+        )
+            ->whereHas('order', function ($query) {
+                $query->where('user_id', auth()->id())
+                    ->where('status', '!=', 'cancelled');
+            })
+            ->sum('quantity');
+
+        if (
+            $lockedEventProduct->reservation_limit !== null
+            && $alreadyReserved + $request->quantity
+                > $lockedEventProduct->reservation_limit
+        ) {
+            return 'reservation_limit_exceeded';
+        }
+
+        if ($request->quantity > $lockedEventProduct->stock) {
+            return 'stock_shortage';
+        }
+
         $order = Order::create([
             'user_id' => auth()->id(),
-            'event_id' => $eventProduct->event_id,
+            'event_id' => $lockedEventProduct->event_id,
             'status' => 'reserved',
             'ordered_at' => now(),
         ]);
 
         $order->items()->create([
-            'event_product_id' => $eventProduct->id,
+            'event_product_id' => $lockedEventProduct->id,
             'quantity' => $request->quantity,
-            'unit_price' => $eventProduct->price,
+            'unit_price' => $lockedEventProduct->price,
         ]);
 
-        $eventProduct->decrement('stock', $request->quantity);
+        $lockedEventProduct->decrement(
+            'stock',
+            $request->quantity
+        );
+
+        return 'success';
     });
+
+    if ($result === 'reservation_limit_exceeded') {
+        return back()->withErrors([
+            'quantity' => '予約数量が上限を超えています。',
+        ])->withInput();
+    }
+
+    if ($result === 'stock_shortage') {
+        return back()->withErrors([
+            'quantity' => '在庫が不足しています。',
+        ])->withInput();
+    }
 
     return redirect()
         ->route('products.show', $eventProduct)
         ->with('success', '苗を予約しました。');
 }
+
+       
     /**
      * Display the specified resource.
      */
@@ -128,12 +194,36 @@ public function updateStatus(Request $request, Order $order)
         ],
     ]);
 
-    $order->update([
-        'status' => $validated['status'],
-    ]);
+    DB::transaction(function () use ($order, $validated) {
+        $order->load('items.eventProduct');
+
+        $wasCancelled = $order->status === 'cancelled';
+        $willBeCancelled = $validated['status'] === 'cancelled';
+
+        if (! $wasCancelled && $willBeCancelled) {
+            foreach ($order->items as $item) {
+                $eventProduct = EventProduct::whereKey(
+                    $item->event_product_id
+                )
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $eventProduct->increment(
+                    'stock',
+                    $item->quantity
+                );
+            }
+        }
+
+        $order->update([
+            'status' => $validated['status'],
+        ]);
+    });
 
     return redirect()
         ->route('admin.orders.index')
         ->with('success', '注文状態を更新しました。');
 }
 }
+
+

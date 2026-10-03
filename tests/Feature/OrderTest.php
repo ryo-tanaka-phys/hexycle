@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use App\Models\OrderItem;
 
 class OrderTest extends TestCase
 {
@@ -224,5 +225,200 @@ public function test_customer_cannot_update_order_status(): void
         'id' => $order->id,
         'status' => 'reserved',
     ]);
+}
+public function test_user_cannot_exceed_reservation_limit_across_multiple_orders(): void
+{
+    $user = User::factory()->create();
+
+    $event = Event::factory()->create([
+        'reservation_start_at' => now()->subHour(),
+        'reservation_end_at' => now()->addHour(),
+    ]);
+
+    $eventProduct = EventProduct::factory()->create([
+        'event_id' => $event->id,
+        'stock' => 10,
+        'reservation_limit' => 3,
+    ]);
+
+    $this
+        ->actingAs($user)
+        ->post(
+            route('orders.store', $eventProduct),
+            [
+                'quantity' => 2,
+            ]
+        )
+        ->assertSessionHasNoErrors();
+
+    $response = $this
+        ->actingAs($user)
+        ->post(
+            route('orders.store', $eventProduct),
+            [
+                'quantity' => 2,
+            ]
+        );
+
+    $response->assertSessionHasErrors('quantity');
+
+    $this->assertSame(
+    2,
+    (int) OrderItem::where('event_product_id', $eventProduct->id)
+        ->sum('quantity')
+);
+}
+public function test_reservation_cannot_be_made_before_reservation_start(): void
+{
+    $user = User::factory()->create();
+
+    $event = Event::factory()->create([
+        'reservation_start_at' => now()->addHour(),
+        'reservation_end_at' => now()->addHours(2),
+    ]);
+
+    $eventProduct = EventProduct::factory()->create([
+        'event_id' => $event->id,
+        'stock' => 10,
+        'reservation_limit' => 3,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->post(
+            route('orders.store', $eventProduct),
+            [
+                'quantity' => 1,
+            ]
+        );
+
+    $response->assertSessionHasErrors('reservation');
+
+    $this->assertDatabaseMissing('orders', [
+        'user_id' => $user->id,
+        'event_id' => $event->id,
+    ]);
+}
+public function test_reservation_cannot_be_made_after_reservation_end(): void
+{
+    $user = User::factory()->create();
+
+    $event = Event::factory()->create([
+        'reservation_start_at' => now()->subHours(2),
+        'reservation_end_at' => now()->subHour(),
+    ]);
+
+    $eventProduct = EventProduct::factory()->create([
+        'event_id' => $event->id,
+        'stock' => 10,
+        'reservation_limit' => 3,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->post(
+            route('orders.store', $eventProduct),
+            [
+                'quantity' => 1,
+            ]
+        );
+
+    $response->assertSessionHasErrors('reservation');
+
+    $this->assertDatabaseMissing('orders', [
+        'user_id' => $user->id,
+        'event_id' => $event->id,
+    ]);
+}
+public function test_reservation_cannot_exceed_stock(): void
+{
+    $user = User::factory()->create();
+
+    $event = Event::factory()->create([
+        'reservation_start_at' => now()->subHour(),
+        'reservation_end_at' => now()->addHour(),
+    ]);
+
+    $eventProduct = EventProduct::factory()->create([
+        'event_id' => $event->id,
+        'stock' => 1,
+        'reservation_limit' => 5,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->post(
+            route('orders.store', $eventProduct),
+            [
+                'quantity' => 2,
+            ]
+        );
+
+    $response->assertSessionHasErrors('quantity');
+
+    $this->assertDatabaseMissing('orders', [
+        'user_id' => $user->id,
+        'event_id' => $event->id,
+    ]);
+
+    $eventProduct->refresh();
+
+    $this->assertSame(
+        1,
+        $eventProduct->stock
+    );
+}
+public function test_cancelling_order_restores_stock(): void
+{
+    $admin = User::factory()->create([
+        'role' => 'admin',
+    ]);
+
+    $user = User::factory()->create();
+
+    $event = Event::factory()->create();
+
+    $eventProduct = EventProduct::factory()->create([
+        'event_id' => $event->id,
+        'stock' => 8,
+        'reservation_limit' => 5,
+    ]);
+
+    $order = Order::factory()->create([
+        'user_id' => $user->id,
+        'event_id' => $event->id,
+        'status' => 'reserved',
+        'ordered_at' => now(),
+    ]);
+
+    $order->items()->create([
+        'event_product_id' => $eventProduct->id,
+        'quantity' => 2,
+        'unit_price' => $eventProduct->price,
+    ]);
+
+    $response = $this
+        ->actingAs($admin)
+        ->patch(
+            route('admin.orders.update-status', $order),
+            [
+                'status' => 'cancelled',
+            ]
+        );
+
+    $response->assertSessionHasNoErrors();
+
+    $order->refresh();
+    $eventProduct->refresh();
+
+    $this->assertSame(
+        'cancelled',
+        $order->status
+    );
+
+    $this->assertSame(
+        10,
+        $eventProduct->stock
+    );
 }
 }
