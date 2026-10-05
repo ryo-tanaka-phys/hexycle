@@ -91,6 +91,15 @@
         </p>
     </div>
 @endif
+<a
+    href="{{ route(
+        'admission-reservations.create',
+        $program
+    ) }}"
+    class="inline-block mt-4 px-4 py-2 bg-gray-800 text-white rounded"
+>
+    時間帯予約へ
+</a>
                 </div>
             @endforeach
         </div>

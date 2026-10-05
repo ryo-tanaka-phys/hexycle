@@ -8,6 +8,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\CultivationController;
 use App\Http\Controllers\VisitController;
+use App\Models\EventProgram;
 use App\Http\Controllers\AdmissionReservationController;
 
 Route::get('/', function () {
@@ -102,7 +103,11 @@ Route::patch('/admin/products/{product}', [ProductController::class, 'update'])
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    $eventPrograms = EventProgram::where('status', 'published')
+        ->orderBy('start_at')
+        ->get();
+
+    return view('dashboard', compact('eventPrograms'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
