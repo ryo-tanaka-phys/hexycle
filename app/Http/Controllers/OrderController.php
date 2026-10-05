@@ -193,7 +193,34 @@ public function updateStatus(Request $request, Order $order)
             'in:reserved,confirmed,ready,completed,cancelled',
         ],
     ]);
+if ($validated['status'] === 'ready') {
+    $order->load('items.cultivations');
 
+    $allReady = $order->items->isNotEmpty()
+        && $order->items->every(function ($item) {
+            $assignedCount = $item->cultivations->count();
+
+            $unassignedCount = max(
+                $item->quantity - $assignedCount,
+                0
+            );
+
+            $readyCount = $item->cultivations
+                ->where('status', 'ready')
+                ->count();
+
+            return
+                $unassignedCount === 0
+                && $assignedCount > 0
+                && $readyCount === $assignedCount;
+        });
+
+    if (! $allReady) {
+        return back()->withErrors([
+            'status' => 'すべての栽培株が受け渡し準備完了になるまで、注文を準備完了にはできません。',
+        ]);
+    }
+}
     DB::transaction(function () use ($order, $validated) {
         $order->load('items.eventProduct');
 

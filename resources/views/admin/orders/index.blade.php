@@ -8,12 +8,67 @@
     <div class="py-8">
         <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
 
-            @forelse ($orders as $order)
-                <div class="mb-6 p-6 bg-white shadow-sm rounded-lg">
+           @forelse ($orders as $order)
+    @php
+    $orderUnassignedCount = $order->items->sum(function ($item) {
+        return max(
+            $item->quantity - $item->cultivations->count(),
+            0
+        );
+    });
+
+    $orderAllReady =
+        $order->items->isNotEmpty()
+        && $order->items->every(function ($item) {
+            $assignedCount = $item->cultivations->count();
+
+            $unassignedCount = max(
+                $item->quantity - $assignedCount,
+                0
+            );
+
+            $readyCount = $item->cultivations
+                ->where('status', 'ready')
+                ->count();
+
+            return
+                $unassignedCount === 0
+                && $assignedCount > 0
+                && $readyCount === $assignedCount;
+        });
+@endphp
+
+    <div class="mb-6 p-6 bg-white shadow-sm rounded-lg">
                     <div class="mb-4">
                         <p class="font-semibold">
                             注文 #{{ $order->id }}
                         </p>
+                        @if ($orderAllReady)
+    <div class="mt-2 p-3 bg-green-50 text-green-700 rounded">
+        この注文は受け渡し準備可能です。
+    </div>
+@else
+    <div class="mt-2 p-3 bg-yellow-50 text-yellow-700 rounded">
+        この注文はまだ受け渡し準備が完了していません。
+    </div>
+@endif
+                        @if ($orderUnassignedCount > 0)
+    <div class="mt-2 p-3 bg-red-50 text-red-700 rounded">
+        未割当の栽培株が
+        {{ $orderUnassignedCount }}株
+        あります。
+    </div>
+@else
+    <div class="mt-2 p-3 bg-green-50 text-green-700 rounded">
+        すべての予約株が割り当て済みです。
+    </div>
+    <a
+    href="{{ route('admin.cultivations.index') }}"
+    class="inline-block mt-3 text-blue-600 hover:underline"
+>
+    栽培割当画面へ
+</a>
+@endif
 
                         <p class="text-sm text-gray-600">
                             購入者:
@@ -74,7 +129,25 @@
                     </div>
 
                     @foreach ($order->items as $item)
-                        <div class="mt-4 pt-4 border-t">
+    @php
+    $assignedCount = $item->cultivations->count();
+
+    $unassignedCount = max(
+        $item->quantity - $assignedCount,
+        0
+    );
+
+    $readyCount = $item->cultivations
+        ->where('status', 'ready')
+        ->count();
+
+    $allReady =
+        $unassignedCount === 0
+        && $assignedCount > 0
+        && $readyCount === $assignedCount;
+@endphp
+
+    <div class="mt-4 pt-4 border-t">
                             <p class="font-semibold">
                                 {{ $item->eventProduct->product->name }}
                             </p>
@@ -83,6 +156,39 @@
                                 数量:
                                 {{ $item->quantity }}
                             </p>
+                           <p class="text-sm">
+    予約数:
+    {{ $item->quantity }}株
+</p>
+
+<p class="text-sm">
+    割当済み:
+    {{ $assignedCount }}株
+</p>
+
+@if ($unassignedCount > 0)
+    <p class="text-sm font-semibold text-red-600">
+        未割当:
+        {{ $unassignedCount }}株
+    </p>
+@else
+    <p class="text-sm text-green-700">
+        未割当: 0株
+    </p>
+@endif
+@if ($allReady)
+    <div class="mt-2 p-3 bg-green-50 text-green-700 rounded">
+        この商品の栽培株はすべて受け渡し準備完了です。
+    </div>
+@elseif ($unassignedCount > 0)
+    <div class="mt-2 p-3 bg-red-50 text-red-700 rounded">
+        未割当の栽培株があります。
+    </div>
+@else
+    <div class="mt-2 p-3 bg-yellow-50 text-yellow-700 rounded">
+        まだ育成中の栽培株があります。
+    </div>
+@endif
 
                             <p class="text-sm">
                                 単価:

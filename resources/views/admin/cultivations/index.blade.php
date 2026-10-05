@@ -140,22 +140,40 @@
                 未割当
             </option>
 
-            @foreach ($orderItems as $orderItem)
-                @if ($orderItem->eventProduct->product_id === $cultivation->product_id)
-                    <option
-                        value="{{ $orderItem->id }}"
-                        @selected($cultivation->order_item_id === $orderItem->id)
-                    >
-                        注文 #{{ $orderItem->order->id }}
-                        /
-                        {{ $orderItem->order->user->name }}
-                        /
-                        {{ $orderItem->eventProduct->product->name }}
-                        /
-                        数量 {{ $orderItem->quantity }}
-                    </option>
-                @endif
-            @endforeach
+         @foreach ($orderItems as $orderItem)
+    @if ($orderItem->eventProduct->product_id === $cultivation->product_id)
+        @php
+            $assignedCount = $orderItem->cultivations->count();
+
+            $remainingCount = max(
+                $orderItem->quantity - $assignedCount,
+                0
+            );
+
+            $isCurrentAssignment =
+                $cultivation->order_item_id === $orderItem->id;
+        @endphp
+
+        @if ($remainingCount > 0 || $isCurrentAssignment)
+            <option
+                value="{{ $orderItem->id }}"
+                @selected($isCurrentAssignment)
+            >
+                注文 #{{ $orderItem->order->id }}
+                /
+                {{ $orderItem->order->user->name }}
+                /
+                {{ $orderItem->eventProduct->product->name }}
+                /
+                予約 {{ $orderItem->quantity }}株
+                /
+                割当済み {{ $assignedCount }}株
+                /
+                残り {{ $remainingCount }}株
+            </option>
+        @endif
+    @endif
+@endforeach
         </select>
 
         @error('order_item_id')
@@ -170,7 +188,9 @@
         >
             割り当て更新
         </button>
-    </form>
+        </form>
+</div>
+
 </div>
 
 @empty

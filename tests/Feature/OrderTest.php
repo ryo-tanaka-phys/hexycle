@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Models\OrderItem;
+use App\Models\Cultivation;
 
 class OrderTest extends TestCase
 {
@@ -419,6 +420,109 @@ public function test_cancelling_order_restores_stock(): void
     $this->assertSame(
         10,
         $eventProduct->stock
+    );
+}
+public function test_order_cannot_be_marked_ready_until_all_cultivations_are_ready(): void
+{
+    $admin = User::factory()->create([
+        'role' => 'admin',
+    ]);
+
+    $user = User::factory()->create();
+    $event = Event::factory()->create();
+
+    $eventProduct = EventProduct::factory()->create([
+        'event_id' => $event->id,
+    ]);
+
+    $order = Order::factory()->create([
+        'user_id' => $user->id,
+        'event_id' => $event->id,
+        'status' => 'reserved',
+        'ordered_at' => now(),
+    ]);
+
+    $item = $order->items()->create([
+        'event_product_id' => $eventProduct->id,
+        'quantity' => 2,
+        'unit_price' => $eventProduct->price,
+    ]);
+
+    Cultivation::factory()->create([
+        'product_id' => $eventProduct->product_id,
+        'order_item_id' => $item->id,
+        'status' => 'ready',
+    ]);
+
+    Cultivation::factory()->create([
+        'product_id' => $eventProduct->product_id,
+        'order_item_id' => $item->id,
+        'status' => 'growing',
+    ]);
+
+    $response = $this
+        ->actingAs($admin)
+        ->patch(
+            route('admin.orders.update-status', $order),
+            [
+                'status' => 'ready',
+            ]
+        );
+
+    $response->assertSessionHasErrors('status');
+
+    $order->refresh();
+
+    $this->assertSame('reserved', $order->status);
+}
+public function test_order_can_be_marked_ready_when_all_cultivations_are_ready(): void
+{
+    $admin = User::factory()->create([
+        'role' => 'admin',
+    ]);
+
+    $user = User::factory()->create();
+    $event = Event::factory()->create();
+
+    $eventProduct = EventProduct::factory()->create([
+        'event_id' => $event->id,
+    ]);
+
+    $order = Order::factory()->create([
+        'user_id' => $user->id,
+        'event_id' => $event->id,
+        'status' => 'reserved',
+        'ordered_at' => now(),
+    ]);
+
+    $item = $order->items()->create([
+        'event_product_id' => $eventProduct->id,
+        'quantity' => 2,
+        'unit_price' => $eventProduct->price,
+    ]);
+
+    Cultivation::factory()->count(2)->create([
+        'product_id' => $eventProduct->product_id,
+        'order_item_id' => $item->id,
+        'status' => 'ready',
+    ]);
+
+    $response = $this
+        ->actingAs($admin)
+        ->patch(
+            route('admin.orders.update-status', $order),
+            [
+                'status' => 'ready',
+            ]
+        );
+
+    $response->assertSessionHasNoErrors();
+
+    $order->refresh();
+
+    $this->assertSame(
+        'ready',
+        $order->status
     );
 }
 }
