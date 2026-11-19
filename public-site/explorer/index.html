@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hexycle | 3D Explorer</title><link rel="stylesheet" href="style.css">
+<header><div class="brand"><svg viewBox="0 0 40 44" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.6"><path d="m20 3 16 9v20l-16 9-16-9V12z M4 12l16 9 16-9 M20 21v20 M12 7l16 9v9l-8 5-8-5v-9"/></g></svg><b>VerTea</b><span> / </span> <strong>Hexycle Explorer</strong></div><div><button id="cad">CAD 原図</button> <button id="full">⛶ 全画面</button></div></header>
+<main><div class="title"><div><small>HEXYCLE &nbsp; / &nbsp; 3D EXPLORER</small><h1>六角形の水耕ラボ</h1></div><button id="demo" class="primary">▷ 自動デモ</button></div>
+<nav aria-label="観察テーマ"><button data-mode="0">装置の構造</button><button data-mode="1">水の循環</button><button data-mode="2">光と空気</button></nav>
+<div class="layout"><section class="stage" aria-label="3D観察エリア"><div id="viewport" tabindex="0" aria-label="3Dモデル。矢印キーで回転、プラスとマイナスで拡大縮小"></div>
+<div class="stagehead"><i></i> 3D CONCEPT MODEL <span> / </span> <b id="viewlabel">全体</b></div><div id="annotation"></div>
+<div class="stagefoot"><span>ドラッグで回転 · ピンチで拡大</span><div><button id="minus" aria-label="縮小">−</button><button id="plus" aria-label="拡大">＋</button><button id="reset" aria-label="全体に戻す">↺</button></div></div></section>
+<aside><small id="chapter"></small><h2 id="heading"></h2><p id="intro"></p><div id="specific"></div>
+<label class="check"><input id="mature" type="checkbox"> 成長後の植物を表示</label>
+<div class="line"><label for="part">部品を調べる</label><select id="part"></select><article><b id="partTitle"></b><em id="status"></em><p id="details"></p></article></div>
+<div class="line"><label for="preset">カメラ</label><select id="preset"><option>全体</option><option>上から</option><option>栽培段</option><option>タンク内部</option><option>屋根とライト</option></select><label class="check"><input type="checkbox" id="xray"> 外装を透かす</label></div></aside></div>
+<footer><span>VerTea &nbsp; / &nbsp; Hexycle</span><span>Body 0.4.0 · 屋根とライトは発表用デザイン · 配管・光・風は模式表示 · 実機未接続</span></footer></main>
+<dialog><h2>作成途中の CAD 原図</h2><p>0.4.0 Body.f3d に保存されたプレビュー</p><img src="assets/CAD.png" alt="六角支柱、上下の支持材、下段の受け皿とタンク"><button id="close">閉じる</button></dialog>
+<script src="vendor/three.min.js"></script><script src="model.js"></script><script src="app.js"></script></html>
