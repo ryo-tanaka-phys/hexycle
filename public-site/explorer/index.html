@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Hexycle | 3D Explorer</title>
+  <link rel="stylesheet" href="style.css"><style>.site-links a{color:inherit;text-underline-offset:3px}.site-links a:focus-visible{outline:2px solid #b2d9b7;outline-offset:3px}</style>
+</head>
+<body>
+<header>
+  <div class="brand"><b>VerTea</b><span>Hexycle Explorer</span></div>
+  <div class="header-controls"><a href="/" target="_top" style="color:inherit;font-size:12px;white-space:nowrap">トップへ戻る</a><button id="cad">CAD 原図</button><button id="full">⛶ 全画面</button></div>
+</header>
+<nav class="site-links" aria-label="サイトナビゲーション" style="display:flex;gap:16px;flex-wrap:wrap;padding:10px 20px;background:#244139;color:#f4f7f0;font-size:12px"><a href="/" target="_top">Home</a><a href="/#discover" target="_top">Discover</a><a href="/journey/" target="_top">Journey</a><a href="/vertea/" target="_top">VerTea</a><span aria-current="page">3D Explorer</span></nav>
+<main>
+  <nav aria-label="パンくず" style="display:block;font-size:12px;margin:8px 0 14px;color:#41654e"><a href="/" target="_top" style="color:inherit">Home</a> / <span aria-current="page">3D Explorer</span></nav>
+  <div class="title"><h1>六角形の水耕ラボ</h1><button id="demo" class="primary" aria-pressed="false">▷ 自動デモ</button></div>
+  <nav aria-label="観察テーマ">
+    <button data-mode="0">装置の構造</button><button data-mode="1">水の循環</button><button data-mode="2">光と空気</button>
+  </nav>
+  <div class="layout">
+    <section class="lesson" aria-labelledby="heading">
+      <small id="chapter"></small><h2 id="heading"></h2><p id="intro"></p>
+      <div id="water-controls" hidden>
+        <p id="step"></p>
+        <div class="flows">
+          <button id="play" aria-pressed="false">▷ 再生</button><button id="next">次の流路 →</button>
+          <select id="speed" aria-label="循環の再生速度"><option value=".5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
+        </div>
+      </div>
+    </section>
+    <section class="stage" aria-label="3D観察エリア">
+      <div class="stagehead"><b>3D CONCEPT MODEL</b><span>実機未接続</span></div>
+      <div id="viewport" tabindex="0" aria-label="3Dモデル。矢印キーで回転、プラスとマイナスで拡大縮小、Homeで全体に戻す"></div>
+      <div class="stagefoot"><span>視点：<b id="viewlabel">全体</b></span><div><button id="minus" aria-label="縮小">−</button><button id="plus" aria-label="拡大">＋</button><button id="reset" aria-label="全体に戻す">↺</button></div></div>
+      <p id="annotation"></p>
+    </section>
+    <aside aria-label="モデルの表示と部品">
+      <div id="specific"></div>
+      <label class="check"><input id="mature" type="checkbox"> 成長後の植物を表示</label>
+      <details id="part-panel">
+        <summary>部品を調べる <b id="partTitle"></b></summary>
+        <label for="part">観察する部品</label><select id="part"></select>
+        <article><em id="status"></em><p id="details"></p></article>
+      </details>
+      <details><summary>カメラと透過表示</summary>
+        <label for="preset">カメラの視点</label><select id="preset"><option>全体</option><option>上から</option><option>栽培段</option><option>タンク内部</option><option>屋根とライト</option></select>
+        <label class="check"><input type="checkbox" id="xray"> 外装を透かす</label>
+      </details>
+      <p class="hint">ドラッグで回転、ピンチで拡大。部品はタップでも選べます。</p>
+    </aside>
+  </div>
+  <footer>Body 0.4.0 · 屋根とライトは発表用デザイン · 配管・光・風は模式表示 · 実機未接続</footer>
+</main>
+<dialog aria-labelledby="cad-title"><h2 id="cad-title">作成途中の CAD 原図</h2><p>0.4.0 Body.f3d に保存されたプレビュー</p><img src="assets/CAD.png" alt="六角支柱、上下の支持材、下段の受け皿とタンク"><button id="close">閉じる</button></dialog>
+<script src="vendor/three.min.js"></script><script src="model.js"></script><script src="app.js"></script>
+</body>
+</html>

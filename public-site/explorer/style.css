@@ -1,0 +1,95 @@
+:root {
+  --ink: #142f26;
+  --green: #204e3f;
+  --muted: #495e53;
+  --line: #c6cfc4;
+  --paper: #f6f6f0;
+  color: var(--ink);
+  background: var(--paper);
+  font: 16px/1.55 "Yu Gothic UI", Meiryo, sans-serif;
+}
+* { box-sizing: border-box; }
+body, h1, h2, p { margin: 0; }
+button, select, input { font: inherit; color: inherit; cursor: pointer; }
+button, select { min-height: 44px; border: 1px solid #a8b7ae; border-radius: 5px; background: white; padding: 6px 12px; }
+button, summary { font-weight: 650; }
+button:hover:not(:disabled), select:hover:not(:disabled) { border-color: var(--green); }
+:focus-visible { outline: 3px solid #ae6b10; outline-offset: 2px; }
+button:disabled, select:disabled { cursor: default; opacity: .55; }
+header, .brand, .header-controls, .title, nav, .flows, .stagehead, .stagefoot, .stagefoot div { display: flex; align-items: center; gap: 8px; }
+header, .title, .stagehead, .stagefoot { justify-content: space-between; }
+header { padding: 8px clamp(14px, 3.5vw, 58px); background: var(--ink); color: white; }
+header button { color: white; background: transparent; border-color: #759086; }
+.brand { gap: 12px; }
+.brand b { font: bold 24px/1 Georgia, serif; }
+.brand span { font-size: .88rem; }
+main { max-width: 1536px; margin: auto; padding: clamp(16px, 2vw, 32px) clamp(14px, 3.5vw, 58px) 12px; }
+.title { margin-bottom: 12px; flex-wrap: wrap; }
+h1 { font-size: clamp(1.65rem, 3vw, 2.8rem); line-height: 1.2; letter-spacing: -.035em; }
+.primary, nav button[aria-pressed=true], #play[aria-pressed=true] { background: var(--green); color: white; border-color: var(--green); }
+nav { flex-wrap: wrap; margin-bottom: 14px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+nav button { background: transparent; border-color: transparent; }
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(310px, 1fr);
+  grid-template-rows: auto 1fr;
+  grid-template-areas: "stage lesson" "stage controls";
+  gap: 0 clamp(16px, 2vw, 30px);
+  align-items: start;
+}
+.stage { grid-area: stage; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: #eaf0e3; }
+.stagehead, .stagefoot { background: #e6ede2; padding: 6px 14px; flex-wrap: wrap; }
+.stagehead { font-size: .85rem; }
+.stagehead b, #chapter { font: 700 .78rem/1.4 ui-monospace, monospace; letter-spacing: .07em; }
+#viewport { position: relative; height: clamp(300px, 55svh, 720px); overflow: hidden; background: radial-gradient(ellipse at center,#f7faed,#e7eee1); cursor: grab; touch-action: none; }
+#viewport:active { cursor: grabbing; }
+#viewport:focus-visible { outline-offset: -4px; }
+canvas, .fallback { display: block; width: 100%; height: 100%; }
+.fallback { object-fit: contain; background: white; }
+.stagefoot { border-top: 1px solid #d6e0d3; }
+.stagefoot button { width: 44px; padding: 0; font-size: 1.2rem; }
+#annotation { font-weight: 600; font-size: .9rem; padding: 5px 14px; color: #365345; background: #f2f5ee; }
+.dark-room #viewport { background: radial-gradient(ellipse at center,#22333a,#101b23); }
+.lesson { grid-area: lesson; }
+aside { grid-area: controls; }
+.lesson, aside { padding: clamp(15px, 2vw, 29px); background: white; }
+.lesson { border-bottom: 1px solid var(--line); }
+#chapter, .hint, footer, #intro { color: var(--muted); }
+h2 { font-size: clamp(1.4rem, 2vw, 2rem); line-height: 1.35; margin: .3em 0; }
+#step { font-size: 1.15rem; font-weight: 700; color: var(--green); margin: .8em 0 .4em; }
+.flows, .check { flex-wrap: wrap; }
+.check { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-right: 10px; cursor: pointer; }
+input { width: 18px; height: 18px; accent-color: var(--green); }
+.lighting-controls { margin-block: .5rem; padding: .5rem .8rem; background: #edf2ea; }
+.lighting-controls p, footer, .hint { font-size: .88rem; }
+details { border-top: 1px solid var(--line); margin-top: .5rem; }
+summary { cursor: pointer; padding: 11px 0; min-height: 44px; }
+summary b { font-size: .87em; color: var(--muted); margin-left: .6em; }
+details label:not(.check) { display: block; margin: .6rem 0 .25rem; }
+details select { width: 100%; }
+article { margin: .75em 0; }
+em { display: inline-block; background: #e9eee4; font-size: .87rem; font-style: normal; padding: .15em .4em; }
+article p, .hint { margin-top: .5em; }
+footer { padding-block: .8rem; }
+dialog { border: 1px solid var(--line); border-radius: 8px; max-width: 94vw; max-height: 90dvh; }
+dialog img { display: block; width: min(64vh, 75vw); height: auto; }
+dialog::backdrop { background: #142f2688; }
+body:fullscreen { overflow-y: auto; }
+body:fullscreen .lesson, body:fullscreen aside, body:fullscreen nav, body:fullscreen #step { font-size: 1.35rem; }
+body:fullscreen .stagehead, body:fullscreen #annotation { font-size: 1.125rem; }
+@media (min-width: 901px) {
+  body:fullscreen main { padding-block: 8px; }
+  body:fullscreen #viewport { height: clamp(230px, calc(100dvh - 330px), 78vh); }
+}
+@media (max-width: 900px) {
+  .layout { display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
+  .lesson, aside { padding: 14px 16px; }
+  #viewport { height: clamp(230px, 40svh, 540px); }
+}
+@media (max-width: 480px) {
+  .brand span { display: none; }
+  nav { gap: 2px; }
+  nav button { padding-inline: 9px; }
+  .title { gap: 4px; }
+  header, .stagehead, .stagefoot { gap: 4px; }
+}
